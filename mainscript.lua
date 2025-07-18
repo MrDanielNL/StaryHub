@@ -1,104 +1,86 @@
--- Load Starlight UI library
-local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/master/Source.lua"))()
+-- Load Luna Library
+local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
--- Create main window with full config
-local window = Starlight:CreateWindow({
-    Name = "Steal a Brainrot",
-    Subtitle = "v1.0",
-    Icon = 6023426915,  -- Replace with your own RBX asset icon if you want
-
-    LoadingSettings = {
-        Title = "Steal a Brainrot Hub",
-        Subtitle = "by You",
-    },
-
-    ConfigurationSettings = {
-        FolderName = "StealABrainrotConfig"
-    },
-
-    LoadingEnabled = true,
-    BuildWarnings = true,
-    InterfaceAdvertisingPrompts = false,
-    NotifyOnCallbackError = true,
+-- Create Window
+local Window = Luna:CreateWindow({
+	Name = "Luna Example Window",
+	Subtitle = "v1.0",
+	LogoID = "82795327169782",
+	LoadingEnabled = true,
+	LoadingTitle = "Luna Interface Suite",
+	LoadingSubtitle = "by Nebula Softworks",
+	ConfigSettings = {
+		RootFolder = nil,
+		ConfigFolder = "LunaExample"
+	},
+	KeySystem = false
 })
 
--- Create main page
-local mainPage = window:Page("Main Features")
+-- Create Tab
+local Tab = Window:CreateTab({
+	Name = "Main Tab",
+	Icon = "view_in_ar", -- Material icon example
+	ImageSource = "Material",
+	ShowTitle = true
+})
 
--- Enable ESP button
-mainPage:Button("Enable ESP", function()
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            local character = player.Character
-            if character and not character:FindFirstChild("ESP") then
-                local esp = Instance.new("BillboardGui", character)
-                esp.Name = "ESP"
-                esp.Adornee = character:FindFirstChild("Head")
-                esp.Size = UDim2.new(0, 100, 0, 40)
-                esp.AlwaysOnTop = true
+-- Create a Section inside the Tab
+Tab:CreateSection("Basic Controls")
 
-                local label = Instance.new("TextLabel", esp)
-                label.Text = player.Name
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = Color3.fromRGB(255, 0, 0)
-                label.TextStrokeTransparency = 0.5
-                label.TextScaled = true
-            end
-        end
-    end
-end)
+-- Create a Button
+local Button = Tab:CreateButton({
+	Name = "Click Me",
+	Description = "Prints a message in output",
+	Callback = function()
+		print("Button clicked!")
+		Luna:Notification({
+			Title = "Button Clicked",
+			Icon = "check_circle",
+			ImageSource = "Material",
+			Content = "You clicked the button successfully!"
+		})
+	end
+})
 
--- Auto Collect Coins button
-mainPage:Button("Auto Collect Coins", function()
-    local coins = workspace:FindFirstChild("Coins") -- Change "Coins" to your actual coin folder name
-    if coins then
-        for _, coin in pairs(coins:GetChildren()) do
-            if coin:IsA("BasePart") then
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, coin, 0)
-                task.wait(0.1)
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, coin, 1)
-            end
-        end
-    end
-end)
+-- Create a Toggle
+local Toggle = Tab:CreateToggle({
+	Name = "Enable Feature",
+	Description = "Toggle something on/off",
+	CurrentValue = false,
+	Callback = function(value)
+		print("Toggle value:", value)
+	end
+}, "FeatureToggleFlag")
 
--- Speed Boost button
-mainPage:Button("Speed Boost", function()
-    local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = 100
-    end
-end)
+-- Create a Slider
+local Slider = Tab:CreateSlider({
+	Name = "Adjust Value",
+	Range = {0, 100},
+	Increment = 5,
+	CurrentValue = 50,
+	Callback = function(value)
+		print("Slider value:", value)
+	end
+}, "SliderFlag")
 
--- Godmode button
-mainPage:Button("Godmode", function()
-    local char = game.Players.LocalPlayer.Character
-    if char then
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.MaxHealth = math.huge
-            humanoid.Health = math.huge
-        end
-        for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-                part.Anchored = false
-            end
-        end
-    end
-end)
+-- Create a Dropdown
+local Dropdown = Tab:CreateDropdown({
+	Name = "Select Option",
+	Description = "Choose an option",
+	Options = {"Option 1", "Option 2", "Option 3"},
+	CurrentOption = "Option 1",
+	MultipleOptions = false,
+	Callback = function(selected)
+		print("Dropdown selected:", selected)
+	end
+}, "DropdownFlag")
 
--- Teleport to NPC button
-mainPage:Button("Teleport to NPC", function()
-    local npc = workspace:FindFirstChild("Bob") -- Change "Bob" to your NPC's name
-    if npc then
-        local rootPart = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
-        if rootPart then
-            game.Players.LocalPlayer.Character:MoveTo(rootPart.Position + Vector3.new(0, 5, 0))
-        end
-    end
-end)
+-- Add Home Tab with some info and discord invite
+Window:CreateHomeTab({
+	SupportedExecutors = {"Synapse X", "Krnl", "Oxygen"}, 
+	DiscordInvite = "NebulaSoftworks", -- just the code, no discord.gg/
+	Icon = 1
+})
 
--- Load autoload configs (planned feature)
-Starlight:LoadAutoloadConfig()
+-- Load saved config automatically
+Luna:LoadAutoloadConfig()
