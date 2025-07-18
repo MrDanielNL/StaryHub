@@ -1,3 +1,22 @@
+-- Anti-Kick bypass for Brainrot (Hooks observeTag in getgc)
+do
+    local hk = false
+    for _, v in pairs(getgc(true)) do
+        if typeof(v) == "table" then
+            local fn = rawget(v, "observeTag")
+            if typeof(fn) == "function" and not hk then
+                hk = true
+                hookfunction(fn, newcclosure(function(_, _)
+                    return {
+                        Disconnect = function() end,
+                        disconnect = function() end
+                    }
+                end))
+            end
+        end
+    end
+end
+
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
 -- Create Window with glitchy red theme
@@ -40,7 +59,7 @@ local Tabs = {
     }),
 }
 
--- Anti-Kick
+-- Additional Anti-Kick (metatable hook, for safety)
 do
     local mt = getrawmetatable(game)
     local oldNamecall = mt.__namecall
