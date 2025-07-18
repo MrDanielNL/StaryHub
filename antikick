@@ -1,63 +1,44 @@
-task.wait(3) -- Wait for game to load properly
-
+-- Safe and Compatible Anti-Kick Script (No NIL Errors)
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
-if not player then
-    repeat task.wait() player = Players.LocalPlayer until player
+
+-- Wait until player is loaded
+while not player do
+    task.wait()
+    player = Players.LocalPlayer
 end
 
+-- Hook metamethods
 local mt = getrawmetatable(game)
 setreadonly(mt, false)
 
 local oldNamecall = mt.__namecall
 local oldIndex = mt.__index
-local oldNewIndex = mt.__newindex
 
--- Metamethod protections
 mt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
-    if self == player and (method == "Kick" or method == "Destroy" or method == "BreakJoints") then
-        warn("[AK] Blocked method:", method)
+    
+    -- Block attempts to Kick or Destroy
+    if method == "Kick" or tostring(self) == "Kick" then
+        warn("[AntiKick] Blocked Kick call")
         return nil
     end
+
+    if method == "Destroy" and tostring(self) == tostring(player) then
+        warn("[AntiKick] Blocked Destroy call on player")
+        return nil
+    end
+
     return oldNamecall(self, ...)
 end)
 
 mt.__index = newcclosure(function(self, key)
+    -- Block direct Kick index
     if self == player and key == "Kick" then
-        warn("[AK] Blocked .Kick access")
+        warn("[AntiKick] Blocked access to .Kick")
         return function() end
     end
     return oldIndex(self, key)
 end)
 
-mt.__newindex = newcclosure(function(self, key, value)
-    if self == player and key == "Kick" then
-        warn("[AK] Blocked setting .Kick")
-        return
-    end
-    return oldNewIndex(self, key, value)
-end)
-
--- Direct Kick override
-player.Kick = function()
-    warn("[AK] Kick attempt blocked.")
-end
-
--- Disable Kick connections safely
-if getconnections and typeof(player.Kick) == "RBXScriptSignal" then
-    for _, conn in ipairs(getconnections(player.Kick)) do
-        pcall(function() conn:Disable() end)
-        warn("[AK] Disabled Kick connection.")
-    end
-end
-
--- Reapply protection if something tries to reset it
-task.spawn(function()
-    while true do
-        player.Kick = function() end
-        task.wait(2)
-    end
-end)
+setreadonly(mt, true)
