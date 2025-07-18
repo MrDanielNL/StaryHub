@@ -1,5 +1,5 @@
 -- External Anti-Kick Loader (wait 3 seconds before continuing)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Mjajas/ANTII/refs/heads/main/antikick.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/MrDanielNL/StaryHub/refs/heads/main/antikick"))()
 task.wait(3)
 
 -- Robust Anti-Kick Bypass (local, for extra protection)
