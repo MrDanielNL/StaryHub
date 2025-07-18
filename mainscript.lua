@@ -1,41 +1,9 @@
--- ✅ Built-in Anti-Kick (Safe & Compatible)
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
-while not player do
-    task.wait()
-    player = Players.LocalPlayer
-end
-
--- Metamethod hooks to block Kick/Destroy
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-
-local oldNamecall = mt.__namecall
-local oldIndex = mt.__index
-
-mt.__namecall = newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    if (self == player and (method == "Kick" or method == "Destroy")) then
-        warn("[AntiKick] Blocked:", method)
-        return nil
-    end
-    return oldNamecall(self, ...)
-end)
-
-mt.__index = newcclosure(function(self, key)
-    if self == player and key == "Kick" then
-        warn("[AntiKick] Blocked access to .Kick")
-        return function() end
-    end
-    return oldIndex(self, key)
-end)
-
-setreadonly(mt, true)
-task.wait(3) -- Wait before loading rest of the UI
-
--- ✅ Luna GUI Setup
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
 
 local Window = Luna:CreateWindow({
     Name = "Rotware Hub 〢 Brainrot Steal",
@@ -73,12 +41,30 @@ local Tabs = {
         ImageSource = "Material",
         ShowTitle = true,
     }),
+    AutoBuy = Window:CreateTab({
+        Name = "Auto Buy",
+        Icon = "settings_remote",
+        ImageSource = "Material",
+        ShowTitle = true,
+    }),
 }
 
--- 🔁 Player services
-local RunService = game:GetService("RunService")
+-- === Anti Kick ===
+do
+    local mt = getrawmetatable(game)
+    local oldNamecall = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if method == "Kick" or method == "kick" then
+            return wait(9e9)
+        end
+        return oldNamecall(self, ...)
+    end)
+    setreadonly(mt, true)
+end
 
--- ✅ Teleport Steal
+-- === Steal (Teleport to center) ===
 local function steal()
     local pos = CFrame.new(0, -500, 0)
     local startT = os.clock()
@@ -90,7 +76,7 @@ local function steal()
     end
 end
 
--- ✅ WalkSpeed Bypass
+-- === WalkSpeed Bypass ===
 local currentSpeed = 0
 local function speedHack(character)
     local humanoid = character:WaitForChild("Humanoid")
@@ -107,30 +93,25 @@ end
 player.CharacterAdded:Connect(speedHack)
 if player.Character then speedHack(player.Character) end
 
--- ✅ Enhanced Steal
+-- === Enhanced Steal & Position Saving ===
 local savedPosition = nil
 local enhancedStealRunning = false
 
 local function savePosition()
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        savedPosition = hrp.Position
-    end
+    if hrp then savedPosition = hrp.Position end
 end
 
 local function enhancedSteal()
     if not savedPosition or enhancedStealRunning then return end
     enhancedStealRunning = true
-
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then enhancedStealRunning = false return end
 
     for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
+        if part:IsA("BasePart") then part.CanCollide = false end
     end
 
     hrp.Anchored = true
@@ -145,9 +126,7 @@ local function enhancedSteal()
             task.wait(0.2)
             hrp.Anchored = false
             for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = true
-                end
+                if part:IsA("BasePart") then part.CanCollide = true end
             end
             enhancedStealRunning = false
         else
@@ -156,7 +135,7 @@ local function enhancedSteal()
     end)
 end
 
--- ✅ Speed Toggle
+-- === Speed Boost Toggle ===
 local speedBoostEnabled = false
 local function toggleSpeedBoost(enabled)
     speedBoostEnabled = enabled
@@ -172,7 +151,7 @@ player.CharacterAdded:Connect(function(char)
     hum.WalkSpeed = speedBoostEnabled and 38 or 18
 end)
 
--- ✅ ESP
+-- === ESP (Billboard + Highlight) ===
 local espEnabled = false
 local espInstances = {}
 
@@ -183,6 +162,7 @@ local function createESP(plr)
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    -- Billboard
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "RotwareESP_" .. plr.Name
     billboard.Adornee = hrp
@@ -204,6 +184,16 @@ local function createESP(plr)
 
     espInstances[plr] = billboard
 
+    -- Highlight
+    local highlight = character:FindFirstChild("ESP_HL")
+    if not highlight then
+        highlight = Instance.new("Highlight", character)
+        highlight.Name = "ESP_HL"
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+        highlight.FillTransparency = 0.4
+    end
+
     plr.CharacterAdded:Connect(function()
         removeESP(plr)
         task.wait(1)
@@ -216,6 +206,11 @@ local function removeESP(plr)
         espInstances[plr]:Destroy()
         espInstances[plr] = nil
     end
+    local character = plr.Character
+    if character then
+        local hl = character:FindFirstChild("ESP_HL")
+        if hl then hl:Destroy() end
+    end
 end
 
 local function toggleESP(enabled)
@@ -225,14 +220,14 @@ local function toggleESP(enabled)
             if plr ~= player then createESP(plr) end
         end
     else
-        for _, esp in pairs(espInstances) do
-            esp:Destroy()
+        for plr, _ in pairs(espInstances) do
+            removeESP(plr)
         end
         espInstances = {}
     end
 end
 
--- ✅ GUI Buttons
+-- === GUI Elements ===
 Tabs.Main:CreateButton({ Name = "Steal (Teleport Center)", Callback = steal })
 Tabs.Main:CreateSlider({
     Name = "Walkspeed Bypass",
@@ -247,6 +242,7 @@ Tabs.Main:CreateToggle({ Name = "Speed Boost (38 WS)", CurrentValue = false, Cal
 
 Tabs.ESP:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Callback = toggleESP })
 
+-- === Settings Tab Keybinds ===
 Tabs.Settings:CreateBind({
     Name = "Steal Keybind",
     CurrentBind = Enum.KeyCode.G,
@@ -258,6 +254,118 @@ Tabs.Settings:CreateBind({
     CurrentBind = Enum.KeyCode.RightControl,
     HoldToInteract = false,
     Callback = function() Window:Toggle() end,
+})
+
+-- === Speed Variable and Speed Boost (from extra snippet) ===
+local speed = 2
+local speedOn = false
+
+Tabs.Main:CreateInput({
+    Name = "Speed Value",
+    PlaceholderText = "2",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(txt)
+        local val = tonumber(txt)
+        if val then speed = math.clamp(val, 1, 100) end
+    end
+})
+
+Tabs.Main:CreateToggle({
+    Name = "Speed Boost (Velocity)",
+    CurrentValue = false,
+    Callback = function(state)
+        speedOn = state
+    end
+})
+
+RunService.Heartbeat:Connect(function()
+    if speedOn then
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local root = char.HumanoidRootPart
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                local dir = hum.MoveDirection
+                root.Velocity = dir * speed
+            end
+        end
+    end
+end)
+
+-- === Multi Jump ===
+_G.MultiJump = false
+Tabs.Main:CreateToggle({
+    Name = "Multi Jump",
+    CurrentValue = false,
+    Callback = function(state)
+        _G.MultiJump = state
+    end
+})
+
+UserInputService.JumpRequest:Connect(function()
+    if _G.MultiJump then
+        local h = player.Character and player.Character:FindFirstChildWhichIsA("Humanoid")
+        if h then h:ChangeState("Jumping") end
+    end
+end)
+
+-- === Godmode ===
+_G.God = false
+Tabs.Main:CreateToggle({
+    Name = "Godmode",
+    CurrentValue = false,
+    Callback = function(state)
+        _G.God = state
+        local h = player.Character and player.Character:FindFirstChildWhichIsA("Humanoid")
+        if h then
+            h:GetPropertyChangedSignal("Health"):Connect(function()
+                if _G.God then h.Health = h.MaxHealth end
+            end)
+        end
+    end
+})
+
+-- === Anti Ragdoll ===
+RunService.Stepped:Connect(function()
+    local c = player.Character
+    if _G.God and c then
+        local humanoid = c:FindFirstChildWhichIsA("Humanoid")
+        if humanoid then
+            if humanoid.PlatformStand then
+                humanoid.PlatformStand = false
+            end
+        end
+    end
+end)
+
+-- === Auto Buy Tab ===
+local AutoBuyEnabled = false
+local AutoBuyItems = {
+    "Fridge", "Newspaper", "Microphone", "BigSpeaker", "Chicken"
+}
+
+Tabs.AutoBuy:CreateToggle({
+    Name = "Auto Buy",
+    CurrentValue = false,
+    Callback = function(state)
+        AutoBuyEnabled = state
+        if state then
+            spawn(function()
+                while AutoBuyEnabled do
+                    for _, itemName in pairs(AutoBuyItems) do
+                        local args = {
+                            [1] = itemName
+                        }
+                        local success, err = pcall(function()
+                            game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("PurchaseEvent"):FireServer(unpack(args))
+                        end)
+                        task.wait(0.2)
+                    end
+                    task.wait(1)
+                end
+            end)
+        end
+    end
 })
 
 Luna:LoadAutoloadConfig()
