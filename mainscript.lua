@@ -1,14 +1,31 @@
--- Load UI libraries
+-- Load Starlight UI library
 local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/master/Source.lua"))()
-local NebulaIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Nebula-Icon-Library/master/Loader.lua"))()
 
--- Create main window
-local window = Starlight:CreateWindow("Steal a Brainrot")
+-- Create main window with full config
+local window = Starlight:CreateWindow({
+    Name = "Steal a Brainrot",
+    Subtitle = "v1.0",
+    Icon = 6023426915,  -- Replace with your own RBX asset icon if you want
+
+    LoadingSettings = {
+        Title = "Steal a Brainrot Hub",
+        Subtitle = "by You",
+    },
+
+    ConfigurationSettings = {
+        FolderName = "StealABrainrotConfig"
+    },
+
+    LoadingEnabled = true,
+    BuildWarnings = true,
+    InterfaceAdvertisingPrompts = false,
+    NotifyOnCallbackError = true,
+})
 
 -- Create main page
 local mainPage = window:Page("Main Features")
 
--- ESP Button
+-- Enable ESP button
 mainPage:Button("Enable ESP", function()
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= game.Players.LocalPlayer then
@@ -32,9 +49,9 @@ mainPage:Button("Enable ESP", function()
     end
 end)
 
--- Auto Collect Button
+-- Auto Collect Coins button
 mainPage:Button("Auto Collect Coins", function()
-    local coins = workspace:FindFirstChild("Coins") -- Replace 'Coins' with your game's coin folder
+    local coins = workspace:FindFirstChild("Coins") -- Change "Coins" to your actual coin folder name
     if coins then
         for _, coin in pairs(coins:GetChildren()) do
             if coin:IsA("BasePart") then
@@ -46,7 +63,7 @@ mainPage:Button("Auto Collect Coins", function()
     end
 end)
 
--- Speed Boost Button
+-- Speed Boost button
 mainPage:Button("Speed Boost", function()
     local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
@@ -54,7 +71,7 @@ mainPage:Button("Speed Boost", function()
     end
 end)
 
--- Godmode Button
+-- Godmode button
 mainPage:Button("Godmode", function()
     local char = game.Players.LocalPlayer.Character
     if char then
@@ -72,9 +89,9 @@ mainPage:Button("Godmode", function()
     end
 end)
 
--- Teleport to NPC Button
+-- Teleport to NPC button
 mainPage:Button("Teleport to NPC", function()
-    local npc = workspace:FindFirstChild("Bob") -- Replace 'Bob' with your NPC name
+    local npc = workspace:FindFirstChild("Bob") -- Change "Bob" to your NPC's name
     if npc then
         local rootPart = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
         if rootPart then
@@ -82,3 +99,6 @@ mainPage:Button("Teleport to NPC", function()
         end
     end
 end)
+
+-- Load autoload configs (planned feature)
+Starlight:LoadAutoloadConfig()
