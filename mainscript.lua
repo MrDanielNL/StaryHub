@@ -1,11 +1,10 @@
--- Rotware Hub v1 | Glitchy Red Theme with Anti-Kick, Walkspeed Bypass, Steal, ESP
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna/main/source.lua", true))()
 
 -- Create Window
 local Window = Luna:CreateWindow({
 	Name = "Rotware Hub 〢 Brainrot Steal",
 	Subtitle = "Glitchy Red Edition",
-	LogoID = nil,
+	LogoID = "", -- empty string disables logo
 	LoadingEnabled = true,
 	LoadingTitle = "Rotware Hub",
 	LoadingSubtitle = "Initializing...",
@@ -18,68 +17,62 @@ local Window = Luna:CreateWindow({
 -- Create Tabs
 local HomeTab = Window:CreateTab({
 	Name = "Home",
-	Icon = "home",
+	Icon = "None",
 	ImageSource = "Material"
 })
 
 local MainTab = Window:CreateTab({
 	Name = "Main",
-	Icon = "psychology",
+	Icon = "None",
 	ImageSource = "Material"
 })
 
 local ESPTab = Window:CreateTab({
 	Name = "ESP",
-	Icon = "visibility",
+	Icon = "None",
 	ImageSource = "Material"
 })
 
 local SettingsTab = Window:CreateTab({
 	Name = "Settings",
-	Icon = "settings",
+	Icon = "None",
 	ImageSource = "Material"
 })
 
--- ========== FEATURES ========== --
-
--- Anti-Kick
+-- === Anti-Kick ===
 local function antiKick()
 	local mt = getrawmetatable(game)
-	local oldNamecall = mt.__namecall
+	local old = mt.__namecall
 	setreadonly(mt, false)
 	mt.__namecall = newcclosure(function(self, ...)
-		if getnamecallmethod() == "Kick" then
-			return wait(9e9)
-		end
-		return oldNamecall(self, ...)
+		if getnamecallmethod() == "Kick" then return wait(9e9) end
+		return old(self, ...)
 	end)
 	setreadonly(mt, true)
 end
 antiKick()
 
--- Steal (Teleport to center)
+-- === Steal (Teleport) ===
 local function steal()
-	local player = game.Players.LocalPlayer
-	local pos = CFrame.new(0, -500, 0)
-	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-		player.Character.HumanoidRootPart.CFrame = pos
+	local p = game.Players.LocalPlayer
+	if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+		p.Character.HumanoidRootPart.CFrame = CFrame.new(0, -500, 0)
 	end
 end
 
--- Walkspeed Bypass
+-- === Walkspeed Bypass ===
 local currentSpeed = 0
 local player = game.Players.LocalPlayer
 
 local function speedHack(char)
 	local humanoid = char:WaitForChild("Humanoid", 3)
 	if not humanoid then return end
-	local RunService = game:GetService("RunService")
 	task.spawn(function()
 		while humanoid and humanoid.Parent do
 			if currentSpeed > 0 and humanoid.MoveDirection.Magnitude > 0 then
-				char:TranslateBy(humanoid.MoveDirection * currentSpeed * RunService.Heartbeat:Wait() * 10)
+				char:TranslateBy(humanoid.MoveDirection * currentSpeed * game:GetService("RunService").Heartbeat:Wait() * 10)
 			end
-			RunService.Heartbeat:Wait()
+			task.wait()
 		end
 	end)
 end
@@ -87,7 +80,7 @@ end
 player.CharacterAdded:Connect(speedHack)
 if player.Character then speedHack(player.Character) end
 
--- ESP
+-- === ESP ===
 local espEnabled = false
 local espObjects = {}
 
@@ -126,7 +119,7 @@ end
 local function toggleESP(state)
 	espEnabled = state
 	if state then
-		for _, p in pairs(game.Players:GetPlayers()) do
+		for _, p in ipairs(game.Players:GetPlayers()) do
 			if p ~= player then addESP(p) end
 		end
 	else
@@ -137,20 +130,17 @@ local function toggleESP(state)
 	end
 end
 
--- ========== UI ELEMENTS ========== --
-
--- Home Tab
+-- === UI Elements ===
 HomeTab:CreateLabel({ Text = "Welcome to Rotware Hub!" })
 HomeTab:CreateLabel({ Text = "Brainrot Stealer Edition" })
 HomeTab:CreateLabel({ Text = "Theme: Glitchy Red" })
 
--- Main Tab
 MainTab:CreateButton({
 	Name = "Steal (Teleport Center)",
 	Callback = steal
 })
 
-local SpeedSlider = MainTab:CreateSlider({
+MainTab:CreateSlider({
 	Name = "Walkspeed Bypass",
 	Range = {0, 10},
 	Increment = 1,
@@ -158,26 +148,20 @@ local SpeedSlider = MainTab:CreateSlider({
 	Callback = function(v)
 		currentSpeed = v
 	end
-}, "Speed")
+})
 
--- ESP Tab
 ESPTab:CreateToggle({
 	Name = "Enable ESP",
 	CurrentValue = false,
-	Callback = function(v)
-		toggleESP(v)
-	end
-}, "ESP")
+	Callback = toggleESP
+})
 
--- Settings Tab
 SettingsTab:CreateBind({
 	Name = "Steal Keybind",
 	CurrentBind = "G",
 	HoldToInteract = false,
-	Callback = function()
-		steal()
-	end
-}, "StealBind")
+	Callback = steal
+})
 
 SettingsTab:CreateBind({
 	Name = "Toggle UI",
@@ -186,19 +170,18 @@ SettingsTab:CreateBind({
 	Callback = function()
 		Window:Toggle()
 	end
-}, "UIToggle")
+})
 
--- Config and Theme Support
+-- Theme & Config Support
 SettingsTab:BuildThemeSection()
 SettingsTab:BuildConfigSection()
 
--- Load Configs Automatically
 Luna:LoadAutoloadConfig()
 
--- Notify
+-- Notification
 Luna:Notification({
 	Title = "Rotware Loaded",
-	Content = "Use Right Ctrl to toggle the UI.",
-	Icon = "check_circle",
+	Content = "Press Right Ctrl to toggle the UI.",
+	Icon = "None",
 	ImageSource = "Material"
 })
