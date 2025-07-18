@@ -1,189 +1,219 @@
+-- Rotware Hub - Glitchy Red Brainrot Features
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
 local Window = Luna:CreateWindow({
-	Name = "Rotware - Brainrot Tools",
+	Name = "Rotware ▸ Brainrot Scripthub",
 	LogoID = nil,
 	LoadingEnabled = true,
-	LoadingTitle = "Rotware",
-	LoadingSubtitle = "Injecting Brainrot...",
+	LoadingTitle = "Loading Rotware...",
+	LoadingSubtitle = "Brainrot Goes Red",
 	ConfigSettings = {
-		ConfigFolder = "Rotware"
+		ConfigFolder = "RotwareHub"
 	},
-	KeySystem = false,
+	KeySystem = false
 })
 
-local Tab = Window:CreateTab({
-	Name = "Main",
-	Icon = "bug_report",
+-- Main Tab
+local MainTab = Window:CreateTab({
+	Name = "Main Features",
+	Icon = "rocket_launch",
 	ImageSource = "Material",
 	ShowTitle = true
 })
 
-Tab:CreateSection("Core Tools")
+-- Section
+MainTab:CreateSection("Brainrot Utilities")
 
--- 🧠 Anti-Kick
+-- 🌐 Anti-Kick
 do
-	local mt = getrawmetatable(game)
-	local old = mt.__namecall
-	setreadonly(mt, false)
-	mt.__namecall = newcclosure(function(self, ...)
-		if getnamecallmethod() == "Kick" then return end
-		return old(self, ...)
-	end)
-	setreadonly(mt, true)
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if method == "Kick" then return end
+        return old(self, ...)
+    end)
+    setreadonly(mt, true)
 end
 
 -- 🚀 Walkspeed Bypass
 local speedValue = 0
-local humanoid
-local speedConn
+local RunService = game:GetService("RunService")
+local plr = game:GetService("Players").LocalPlayer
 
-local function updateSpeed()
-	local char = game.Players.LocalPlayer.Character
-	if char and char:FindFirstChild("Humanoid") then
-		humanoid = char.Humanoid
-		if speedConn then speedConn:Disconnect() end
-		speedConn = game:GetService("RunService").Heartbeat:Connect(function(dt)
-			if speedValue > 0 and humanoid.MoveDirection.Magnitude > 0 then
-				char:TranslateBy(humanoid.MoveDirection * dt * speedValue * 5)
-			end
-		end)
-	end
+local function applySpeed()
+	if not plr.Character then return end
+	local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	RunService:BindToRenderStep("RotwareSpeed", Enum.RenderPriority.Character.Value + 1, function()
+		if speedValue > 0 and humanoid.MoveDirection.Magnitude > 0 then
+			plr.Character:TranslateBy(humanoid.MoveDirection * speedValue * 0.2)
+		end
+	end)
 end
 
-game.Players.LocalPlayer.CharacterAdded:Connect(updateSpeed)
-if game.Players.LocalPlayer.Character then updateSpeed() end
+plr.CharacterAdded:Connect(function()
+	task.wait(1)
+	applySpeed()
+end)
+if plr.Character then applySpeed() end
 
-Tab:CreateSlider({
+MainTab:CreateSlider({
 	Name = "Walkspeed Bypass",
-	Range = {0, 10},
-	Increment = 1,
+	Range = {0, 5},
+	Increment = 0.1,
 	CurrentValue = 0,
-	Callback = function(value)
-		speedValue = value
+	Callback = function(val)
+		speedValue = val
 	end
-}, "Walkspeed")
+}, "SpeedBypass")
 
--- 🕵️‍♂️ Invisibility Cloak
-Tab:CreateButton({
-	Name = "Toggle Invisibility Cloak",
-	Description = "Drops the cloak to become invisible (must be equipped).",
+-- 🕳️ Cloak (Invisible Cloak)
+MainTab:CreateButton({
+	Name = "Use Invisible Cloak",
+	Description = "Forces cloak use if equipped",
 	Callback = function()
-		local char = game.Players.LocalPlayer.Character
-		if char then
-			local cloak = char:FindFirstChild("Invisibility Cloak")
-			if cloak and cloak:GetAttribute("SpeedModifier") == 2 then
-				cloak.Parent = workspace
-				Luna:Notification({Title = "Rotware", Content = "Cloak dropped. You're invisible!"})
-			else
-				Luna:Notification({Title = "Rotware", Content = "Equip the cloak first!"})
-			end
+		local cloak = plr.Character and plr.Character:FindFirstChild("Invisibility Cloak")
+		if cloak and cloak:GetAttribute("SpeedModifier") == 2 then
+			cloak.Parent = workspace
+			Luna:Notification({
+				Title = "Cloak Used",
+				Content = "You are now invisible",
+				Icon = "visibility_off",
+				ImageSource = "Material"
+			})
+		else
+			Luna:Notification({
+				Title = "No Cloak Found",
+				Content = "Equip the cloak manually first",
+				Icon = "warning",
+				ImageSource = "Material"
+			})
 		end
 	end
 })
 
--- 📡 ESP (Glitchy Red)
-local espEnabled = false
-local espTable = {}
-
-local function createESP(plr)
-	if plr == game.Players.LocalPlayer then return end
-	local char = plr.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-
-	local tag = Instance.new("BillboardGui")
-	tag.Name = "RotwareESP"
-	tag.AlwaysOnTop = true
-	tag.Size = UDim2.new(0, 200, 0, 40)
-	tag.StudsOffset = Vector3.new(0, 3, 0)
-	tag.Adornee = char:FindFirstChild("HumanoidRootPart")
-	tag.Parent = char:FindFirstChild("HumanoidRootPart")
-
-	local text = Instance.new("TextLabel", tag)
-	text.Size = UDim2.new(1, 0, 1, 0)
-	text.BackgroundTransparency = 1
-	text.Text = plr.DisplayName
-	text.TextColor3 = Color3.fromRGB(255, 50, 50)
-	text.TextStrokeTransparency = 0
-	text.TextStrokeColor3 = Color3.new(0, 0, 0)
-	text.TextScaled = true
-	text.Font = Enum.Font.GothamBold
-
-	espTable[plr] = tag
-end
-
-local function clearESP()
-	for _, v in pairs(espTable) do
-		if v then v:Destroy() end
+-- 🧲 Steal Position (Teleport)
+MainTab:CreateButton({
+	Name = "Steal Position",
+	Description = "TPs you to an underground point (can be used to steal)",
+	Callback = function()
+		local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		local t = tick()
+		while tick() - t < 1.2 do
+			hrp.CFrame = CFrame.new(0, -500, 0)
+			task.wait()
+		end
 	end
-	table.clear(espTable)
+})
+
+-- 🔴 ESP
+local espActive = false
+local espCache = {}
+
+local function createESP(target)
+	local char = target.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "RotwareESP"
+	gui.Adornee = hrp
+	gui.Size = UDim2.new(0, 200, 0, 30)
+	gui.StudsOffset = Vector3.new(0, 3, 0)
+	gui.AlwaysOnTop = true
+
+	local label = Instance.new("TextLabel")
+	label.Text = target.DisplayName
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.TextColor3 = Color3.fromRGB(255, 50, 50)
+	label.TextStrokeTransparency = 0
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.Parent = gui
+
+	gui.Parent = hrp
+	espCache[target] = gui
 end
 
-Tab:CreateToggle({
-	Name = "ESP (Players)",
-	CurrentValue = false,
-	Callback = function(state)
-		espEnabled = state
-		clearESP()
-		if espEnabled then
-			for _, plr in pairs(game.Players:GetPlayers()) do
-				if plr ~= game.Players.LocalPlayer then
-					createESP(plr)
-					plr.CharacterAdded:Connect(function()
-						task.wait(1)
-						createESP(plr)
-					end)
+local function toggleESP(state)
+	espActive = state
+	for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+		if p ~= plr then
+			if state then
+				createESP(p)
+			else
+				if espCache[p] then
+					espCache[p]:Destroy()
+					espCache[p] = nil
 				end
 			end
 		end
 	end
+end
+
+MainTab:CreateToggle({
+	Name = "Enable ESP (Glitch Red)",
+	CurrentValue = false,
+	Callback = toggleESP
 }, "ESP")
 
--- ⚡ Steal Teleport
-Tab:CreateButton({
-	Name = "Steal Teleport",
-	Description = "Launch downward into brainrot void.",
+-- 🐾 Pet Finder (simple log)
+MainTab:CreateButton({
+	Name = "Log All Pets",
+	Description = "Prints pets found in ReplicatedStorage",
 	Callback = function()
-		local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-		if hrp then
-			local target = CFrame.new(0, -500, 0)
-			for _ = 1, 50 do
-				hrp.CFrame = target
-				task.wait()
+		local pets = {}
+		for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+			if v:IsA("Model") and v.Name:lower():find("pet") then
+				table.insert(pets, v.Name)
 			end
 		end
+		warn("[Rotware] Pets found:\n", table.concat(pets, ", "))
 	end
 })
 
--- 🔁 Rejoin
-Tab:CreateButton({
+-- 🔁 Server Hop / Rejoin
+local TeleportService = game:GetService("TeleportService")
+local placeId = game.PlaceId
+
+local ServerTab = Window:CreateTab({
+	Name = "Server Tools",
+	Icon = "dns",
+	ImageSource = "Material",
+	ShowTitle = true
+})
+
+ServerTab:CreateButton({
 	Name = "Rejoin Server",
-	Description = "Quickly rejoin current server.",
+	Description = "Reconnects to current server",
 	Callback = function()
-		game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+		TeleportService:Teleport(placeId, plr)
 	end
 })
 
--- 🎲 Server Hop
-Tab:CreateButton({
+ServerTab:CreateButton({
 	Name = "Server Hop",
-	Description = "Hop to a different public server.",
+	Description = "Joins a new server",
 	Callback = function()
-		local HttpService = game:GetService("HttpService")
-		local TeleportService = game:GetService("TeleportService")
-		local success, servers = pcall(function()
-			return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
-		end)
-		if success and servers and servers.data then
-			for _, s in pairs(servers.data) do
-				if s.id ~= game.JobId then
-					TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-					break
-				end
+		local servers = {}
+		local req = game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100")
+		local decoded = game:GetService("HttpService"):JSONDecode(req)
+		for _, v in pairs(decoded.data) do
+			if v.playing < v.maxPlayers then
+				table.insert(servers, v.id)
 			end
+		end
+		if #servers > 0 then
+			TeleportService:TeleportToPlaceInstance(placeId, servers[math.random(1, #servers)], plr)
 		end
 	end
 })
 
--- Finalize
+-- Load Saved Config
 Luna:LoadAutoloadConfig()
