@@ -1,6 +1,9 @@
--- Robust Anti-Kick Bypass (put this at the very top)
+-- External Anti-Kick Loader (wait 3 seconds before continuing)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Mjajas/ANTII/refs/heads/main/antikick.lua"))()
+task.wait(3)
+
+-- Robust Anti-Kick Bypass (local, for extra protection)
 do
-    -- Patch observeTag to disable disconnects (Brainrot anti-kick)
     local hk = false
     for _, v in pairs(getgc(true)) do
         if typeof(v) == "table" then
@@ -17,7 +20,6 @@ do
         end
     end
 
-    -- Hook metatable to block Kick and remote kick attempts
     local mt = getrawmetatable(game)
     local oldNamecall = mt.__namecall
     local oldIndex = mt.__index
