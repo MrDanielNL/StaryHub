@@ -1,9 +1,40 @@
--- External Anti-Kick Loader (wait 3 seconds before continuing)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/MrDanielNL/StaryHub/refs/heads/main/antikick"))()
-task.wait(3)
+-- ✅ Built-in Anti-Kick (Safe & Compatible)
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
+while not player do
+    task.wait()
+    player = Players.LocalPlayer
+end
 
--- Luna GUI Setup
+-- Metamethod hooks to block Kick/Destroy
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+
+local oldNamecall = mt.__namecall
+local oldIndex = mt.__index
+
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    if (self == player and (method == "Kick" or method == "Destroy")) then
+        warn("[AntiKick] Blocked:", method)
+        return nil
+    end
+    return oldNamecall(self, ...)
+end)
+
+mt.__index = newcclosure(function(self, key)
+    if self == player and key == "Kick" then
+        warn("[AntiKick] Blocked access to .Kick")
+        return function() end
+    end
+    return oldIndex(self, key)
+end)
+
+setreadonly(mt, true)
+task.wait(3) -- Wait before loading rest of the UI
+
+-- ✅ Luna GUI Setup
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
 local Window = Luna:CreateWindow({
@@ -44,12 +75,10 @@ local Tabs = {
     }),
 }
 
--- Player references
-local Players = game:GetService("Players")
+-- 🔁 Player services
 local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
 
--- BASIC TELEPORT STEAL
+-- ✅ Teleport Steal
 local function steal()
     local pos = CFrame.new(0, -500, 0)
     local startT = os.clock()
@@ -61,11 +90,10 @@ local function steal()
     end
 end
 
--- WALKSPEED BYPASS
+-- ✅ WalkSpeed Bypass
 local currentSpeed = 0
 local function speedHack(character)
     local humanoid = character:WaitForChild("Humanoid")
-    local RunService = game:GetService("RunService")
     task.spawn(function()
         while character and humanoid and humanoid.Parent do
             if currentSpeed > 0 and humanoid.MoveDirection.Magnitude > 0 then
@@ -79,7 +107,7 @@ end
 player.CharacterAdded:Connect(speedHack)
 if player.Character then speedHack(player.Character) end
 
--- ENHANCED STEAL FUNCTIONS
+-- ✅ Enhanced Steal
 local savedPosition = nil
 local enhancedStealRunning = false
 
@@ -106,8 +134,7 @@ local function enhancedSteal()
     end
 
     hrp.Anchored = true
-    local floatPos = hrp.Position + Vector3.new(0, 15, 0)
-    hrp.CFrame = CFrame.new(floatPos)
+    hrp.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 15, 0))
     task.wait(0.6)
 
     local connection
@@ -129,7 +156,7 @@ local function enhancedSteal()
     end)
 end
 
--- SPEED BOOST (38 WalkSpeed toggle)
+-- ✅ Speed Toggle
 local speedBoostEnabled = false
 local function toggleSpeedBoost(enabled)
     speedBoostEnabled = enabled
@@ -145,39 +172,7 @@ player.CharacterAdded:Connect(function(char)
     hum.WalkSpeed = speedBoostEnabled and 38 or 18
 end)
 
--- MAIN TAB BUTTONS
-Tabs.Main:CreateButton({
-    Name = "Steal (Teleport Center)",
-    Callback = steal,
-})
-
-Tabs.Main:CreateSlider({
-    Name = "Walkspeed Bypass",
-    Range = {0, 10},
-    Increment = 1,
-    CurrentValue = 0,
-    Callback = function(value)
-        currentSpeed = value
-    end,
-}, "WalkspeedBypass")
-
-Tabs.Main:CreateButton({
-    Name = "Save Position",
-    Callback = savePosition,
-})
-
-Tabs.Main:CreateButton({
-    Name = "Enhanced Steal (Float + Fly)",
-    Callback = enhancedSteal,
-})
-
-Tabs.Main:CreateToggle({
-    Name = "Speed Boost (38 WS)",
-    CurrentValue = false,
-    Callback = toggleSpeedBoost,
-}, "SpeedBoost")
-
--- ESP SYSTEM
+-- ✅ ESP
 local espEnabled = false
 local espInstances = {}
 
@@ -209,15 +204,10 @@ local function createESP(plr)
 
     espInstances[plr] = billboard
 
-    plr.CharacterAdded:Connect(function(newChar)
-        if espInstances[plr] then
-            espInstances[plr]:Destroy()
-            espInstances[plr] = nil
-        end
-        wait(1)
-        if espEnabled then
-            createESP(plr)
-        end
+    plr.CharacterAdded:Connect(function()
+        removeESP(plr)
+        task.wait(1)
+        if espEnabled then createESP(plr) end
     end)
 end
 
@@ -231,43 +221,45 @@ end
 local function toggleESP(enabled)
     espEnabled = enabled
     if enabled then
-        for _, plr in pairs(game.Players:GetPlayers()) do
-            if plr ~= player then
-                createESP(plr)
-            end
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= player then createESP(plr) end
         end
     else
-        for plr, esp in pairs(espInstances) do
-            if esp then esp:Destroy() end
+        for _, esp in pairs(espInstances) do
+            esp:Destroy()
         end
         espInstances = {}
     end
 end
 
-Tabs.ESP:CreateToggle({
-    Name = "Enable ESP",
-    CurrentValue = false,
-    Callback = toggleESP,
-}, "ESPEnabled")
+-- ✅ GUI Buttons
+Tabs.Main:CreateButton({ Name = "Steal (Teleport Center)", Callback = steal })
+Tabs.Main:CreateSlider({
+    Name = "Walkspeed Bypass",
+    Range = {0, 10},
+    Increment = 1,
+    CurrentValue = 0,
+    Callback = function(val) currentSpeed = val end,
+})
+Tabs.Main:CreateButton({ Name = "Save Position", Callback = savePosition })
+Tabs.Main:CreateButton({ Name = "Enhanced Steal (Float + Fly)", Callback = enhancedSteal })
+Tabs.Main:CreateToggle({ Name = "Speed Boost (38 WS)", CurrentValue = false, Callback = toggleSpeedBoost })
 
--- SETTINGS TAB BINDS
+Tabs.ESP:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Callback = toggleESP })
+
 Tabs.Settings:CreateBind({
     Name = "Steal Keybind",
     CurrentBind = Enum.KeyCode.G,
     HoldToInteract = false,
     Callback = steal,
-}, "StealKeybind")
-
+})
 Tabs.Settings:CreateBind({
     Name = "Toggle UI",
     CurrentBind = Enum.KeyCode.RightControl,
     HoldToInteract = false,
-    Callback = function()
-        Window:Toggle()
-    end,
-}, "ToggleUIBind")
+    Callback = function() Window:Toggle() end,
+})
 
--- Finalize UI
 Luna:LoadAutoloadConfig()
 Window:Show()
 
