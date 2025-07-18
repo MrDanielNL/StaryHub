@@ -1,5 +1,5 @@
 -- Load Starlight Interface Suite
-local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/main/main.lua"))()
+local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/master/Source.lua", true))()
 local Window = Starlight:CreateWindow("Steal a Brainrot", "v1.0")
 
 -- Create Pages
