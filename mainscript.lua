@@ -1,5 +1,6 @@
--- Anti-Kick bypass for Brainrot (Hooks observeTag in getgc)
+-- Robust Anti-Kick Bypass (put this at the very top)
 do
+    -- Patch observeTag to disable disconnects (Brainrot anti-kick)
     local hk = false
     for _, v in pairs(getgc(true)) do
         if typeof(v) == "table" then
@@ -15,7 +16,46 @@ do
             end
         end
     end
+
+    -- Hook metatable to block Kick and remote kick attempts
+    local mt = getrawmetatable(game)
+    local oldNamecall = mt.__namecall
+    local oldIndex = mt.__index
+    setreadonly(mt, false)
+
+    mt.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        if method == "Kick" or method == "kick" then
+            return wait(9e9)
+        end
+
+        if tostring(self) == "Kick" or tostring(self) == "kick" then
+            return wait(9e9)
+        end
+
+        if method == "FireServer" then
+            local args = {...}
+            local eventName = tostring(self.Name or "")
+            if eventName:lower():find("kick") or eventName:lower():find("ban") then
+                return wait(9e9)
+            end
+        end
+
+        return oldNamecall(self, ...)
+    end)
+
+    mt.__index = newcclosure(function(self, key)
+        if key == "Destroy" then
+            return function() end
+        end
+        return oldIndex(self, key)
+    end)
+
+    setreadonly(mt, true)
 end
+
+
+-- Your original Luna script below
 
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
@@ -58,21 +98,6 @@ local Tabs = {
         ShowTitle = true,
     }),
 }
-
--- Additional Anti-Kick (metatable hook, for safety)
-do
-    local mt = getrawmetatable(game)
-    local oldNamecall = mt.__namecall
-    setreadonly(mt, false)
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        if method == "Kick" or method == "kick" then
-            return wait(9e9)
-        end
-        return oldNamecall(self, ...)
-    end)
-    setreadonly(mt, true)
-end
 
 -- Steal function: teleport player to center
 local function steal()
