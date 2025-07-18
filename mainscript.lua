@@ -54,12 +54,9 @@ do
     setreadonly(mt, true)
 end
 
-
--- Your original Luna script below
-
+-- Luna GUI Setup
 local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua", true))()
 
--- Create Window with glitchy red theme
 local Window = Luna:CreateWindow({
     Name = "Rotware Hub 〢 Brainrot Steal",
     Subtitle = "Glitchy Red Edition",
@@ -72,7 +69,6 @@ local Window = Luna:CreateWindow({
     }
 })
 
--- Create Tabs
 local Tabs = {
     Home = Window:CreateHomeTab({
         SupportedExecutors = {"Swift", "Delta", "Wave"},
@@ -99,9 +95,13 @@ local Tabs = {
     }),
 }
 
--- Steal function: teleport player to center
+-- Player references
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- BASIC TELEPORT STEAL
 local function steal()
-    local player = game.Players.LocalPlayer
     local pos = CFrame.new(0, -500, 0)
     local startT = os.clock()
     while os.clock() - startT < 1 do
@@ -112,10 +112,8 @@ local function steal()
     end
 end
 
--- Walkspeed Bypass
+-- WALKSPEED BYPASS
 local currentSpeed = 0
-local player = game.Players.LocalPlayer
-
 local function speedHack(character)
     local humanoid = character:WaitForChild("Humanoid")
     local RunService = game:GetService("RunService")
@@ -132,13 +130,79 @@ end
 player.CharacterAdded:Connect(speedHack)
 if player.Character then speedHack(player.Character) end
 
--- Main Tab Elements
+-- ENHANCED STEAL FUNCTIONS
+local savedPosition = nil
+local enhancedStealRunning = false
+
+local function savePosition()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        savedPosition = hrp.Position
+    end
+end
+
+local function enhancedSteal()
+    if not savedPosition or enhancedStealRunning then return end
+    enhancedStealRunning = true
+
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then enhancedStealRunning = false return end
+
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+
+    hrp.Anchored = true
+    local floatPos = hrp.Position + Vector3.new(0, 15, 0)
+    hrp.CFrame = CFrame.new(floatPos)
+    task.wait(0.6)
+
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        local dir = (savedPosition - hrp.Position)
+        if dir.Magnitude < 2 then
+            connection:Disconnect()
+            task.wait(0.2)
+            hrp.Anchored = false
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+            enhancedStealRunning = false
+        else
+            hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(savedPosition), 0.02)
+        end
+    end)
+end
+
+-- SPEED BOOST (38 WalkSpeed toggle)
+local speedBoostEnabled = false
+local function toggleSpeedBoost(enabled)
+    speedBoostEnabled = enabled
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = enabled and 38 or 18
+    end
+end
+
+player.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = speedBoostEnabled and 38 or 18
+end)
+
+-- MAIN TAB BUTTONS
 Tabs.Main:CreateButton({
     Name = "Steal (Teleport Center)",
     Callback = steal,
 })
 
-local speedSlider = Tabs.Main:CreateSlider({
+Tabs.Main:CreateSlider({
     Name = "Walkspeed Bypass",
     Range = {0, 10},
     Increment = 1,
@@ -148,7 +212,23 @@ local speedSlider = Tabs.Main:CreateSlider({
     end,
 }, "WalkspeedBypass")
 
--- ESP Setup
+Tabs.Main:CreateButton({
+    Name = "Save Position",
+    Callback = savePosition,
+})
+
+Tabs.Main:CreateButton({
+    Name = "Enhanced Steal (Float + Fly)",
+    Callback = enhancedSteal,
+})
+
+Tabs.Main:CreateToggle({
+    Name = "Speed Boost (38 WS)",
+    CurrentValue = false,
+    Callback = toggleSpeedBoost,
+}, "SpeedBoost")
+
+-- ESP SYSTEM
 local espEnabled = false
 local espInstances = {}
 
@@ -221,7 +301,7 @@ Tabs.ESP:CreateToggle({
     Callback = toggleESP,
 }, "ESPEnabled")
 
--- Settings Tab keybinds
+-- SETTINGS TAB BINDS
 Tabs.Settings:CreateBind({
     Name = "Steal Keybind",
     CurrentBind = Enum.KeyCode.G,
@@ -238,13 +318,10 @@ Tabs.Settings:CreateBind({
     end,
 }, "ToggleUIBind")
 
--- Load autoload config (important)
+-- Finalize UI
 Luna:LoadAutoloadConfig()
-
--- Show UI
 Window:Show()
 
--- Notification
 Luna:Notification({
     Title = "Rotware Hub",
     Icon = "circle_notifications",
