@@ -1,14 +1,16 @@
--- Load Starlight Interface Suite
-local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/master/Source.lua", true))()
-local Window = Starlight:CreateWindow("Steal a Brainrot", "v1.0")
+-- Load UI libraries
+local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/master/Source.lua"))()
+local NebulaIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Nebula-Icon-Library/master/Loader.lua"))()
 
--- Create Pages
-local MainPage = Window:Page("Main Features")
+-- Create main window
+local window = Starlight:CreateWindow("Steal a Brainrot")
 
--- ESP Toggle
-MainPage:Button("Enable ESP", function()
-    -- Simple ESP using BillboardGui
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+-- Create main page
+local mainPage = window:Page("Main Features")
+
+-- ESP Button
+mainPage:Button("Enable ESP", function()
+    for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= game.Players.LocalPlayer then
             local character = player.Character
             if character and not character:FindFirstChild("ESP") then
@@ -30,9 +32,9 @@ MainPage:Button("Enable ESP", function()
     end
 end)
 
--- Auto Collect Coins
-MainPage:Button("Auto Collect Coins", function()
-    local coins = workspace:FindFirstChild("Coins") -- Rename this to your coin folder
+-- Auto Collect Button
+mainPage:Button("Auto Collect Coins", function()
+    local coins = workspace:FindFirstChild("Coins") -- Replace 'Coins' with your game's coin folder
     if coins then
         for _, coin in pairs(coins:GetChildren()) do
             if coin:IsA("BasePart") then
@@ -44,36 +46,39 @@ MainPage:Button("Auto Collect Coins", function()
     end
 end)
 
--- Speed Boost
-MainPage:Button("Speed Boost", function()
-    local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+-- Speed Boost Button
+mainPage:Button("Speed Boost", function()
+    local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
     if humanoid then
-        humanoid.WalkSpeed = 100 -- Change speed as needed
+        humanoid.WalkSpeed = 100
     end
 end)
 
--- Godmode
-MainPage:Button("Godmode", function()
+-- Godmode Button
+mainPage:Button("Godmode", function()
     local char = game.Players.LocalPlayer.Character
     if char then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
-                v.Anchored = false
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.MaxHealth = math.huge
+            humanoid.Health = math.huge
+        end
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+                part.Anchored = false
             end
         end
-        char:FindFirstChildOfClass("Humanoid").Health = math.huge
-        char:FindFirstChildOfClass("Humanoid").MaxHealth = math.huge
     end
 end)
 
--- Teleport to NPC
-MainPage:Button("Teleport to NPC", function()
-    local npc = workspace:FindFirstChild("Bob") -- Replace 'Bob' with your actual NPC name
-    if npc and npc:IsA("Model") then
-        local root = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
-        if root then
-            game.Players.LocalPlayer.Character:MoveTo(root.Position + Vector3.new(0, 5, 0))
+-- Teleport to NPC Button
+mainPage:Button("Teleport to NPC", function()
+    local npc = workspace:FindFirstChild("Bob") -- Replace 'Bob' with your NPC name
+    if npc then
+        local rootPart = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart
+        if rootPart then
+            game.Players.LocalPlayer.Character:MoveTo(rootPart.Position + Vector3.new(0, 5, 0))
         end
     end
 end)
